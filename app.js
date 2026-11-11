@@ -13,6 +13,7 @@
     { id: 'party', icon: '🎉', name: 'Partying' },
     { id: 'gym', icon: '🏋️', name: 'Gym' }
   ];
+  var DEFAULTS_TH = { pray: 'สวดมนต์', fast: 'ถือศีลอด', veg: 'กินมังสวิรัติ', party: 'ปาร์ตี้', gym: 'ออกกำลังกาย' };
   var data = { acts: DEFAULTS.slice(), log: {} };
   try {
     var saved = JSON.parse(localStorage.getItem(STORE));
@@ -23,13 +24,73 @@
     var ids = data.log[k] || [];
     return data.acts.filter(function (a) { return ids.indexOf(a.id) >= 0; });
   }
+  function pref(k, v) {
+    try { if (v === undefined) return localStorage.getItem(STORE + '.' + k); localStorage.setItem(STORE + '.' + k, v); } catch (e) { /* ignore */ }
+    return null;
+  }
+
+  /* ---------- language ---------- */
+  var lang = pref('lang') || ((navigator.language || '').toLowerCase().indexOf('th') === 0 ? 'th' : 'en');
+  var TH = lang === 'th';
+  var STR = {
+    en: {
+      day: 'Day', week: 'Week', month: 'Month', today: 'Today', switchTo: 'ไทย',
+      full: 'full', 'new': 'new', half: 'half moon – all four are Wan Phra', pub: 'public holiday', waxwan: '↑ waxing ↓ waning day',
+      glance: function (m) { return m + ' at a glance'; }, phraList: '☸ Wan Phra (Buddhist holy days):', noHol: 'No holidays this month.',
+      vegStart: 'Vegetarian Festival begins (9 days)', vegCont: 'Vegetarian Festival continues',
+      wanPhra: 'Wan Phra', wanPhraChip: '☸ Wan Phra · วันพระ – ', wanKon: 'Wan Kon · วันโกน – eve of Wan Phra',
+      tagPublic: 'Public holiday', tagBuddhist: 'Buddhist day', tagObs: 'Observance',
+      myDay: 'My day', edit: 'Edit symbols', noSym: 'No symbols yet – tap “Edit symbols” to add some.',
+      calc: function (y) { return 'Lunar dates for ' + y + ' are calculated from the calendar rules. Thailand confirms the official dates year by year, so a festival can occasionally differ by a day.'; },
+      openFull: 'Open full day', symTitle: 'Your symbols', del: 'Delete', none: 'No symbols yet', add: 'Add',
+      namePh: 'Name, e.g. Meditation',
+      hint: "Tip: use your phone's emoji keyboard for the symbol. Deleting a symbol also removes it from the days where you used it.",
+      exp: 'Export backup', imp: 'Import backup',
+      confirmDel: function (n, c) { return 'Delete “' + n + '”? It is used on ' + c + ' day' + (c > 1 ? 's' : '') + ' and will be removed from them.'; },
+      confirmImp: 'Replace everything on this device with the backup?', badFile: 'That file is not a Thai Calendar backup.',
+      prev: 'Previous', next: 'Next', close: 'Close', appTitle: 'Thai Calendar'
+    },
+    th: {
+      day: 'วัน', week: 'สัปดาห์', month: 'เดือน', today: 'วันนี้', switchTo: 'EN',
+      full: 'เต็มดวง', 'new': 'เดือนดับ', half: 'ครึ่งดวง – ทั้งสี่แบบคือวันพระ', pub: 'วันหยุดราชการ', waxwan: '↑ ข้างขึ้น ↓ ข้างแรม',
+      glance: function (m) { return 'วันสำคัญในเดือน' + m; }, phraList: '☸ วันพระ:', noHol: 'เดือนนี้ไม่มีวันหยุดหรือวันสำคัญ',
+      vegStart: 'เริ่มเทศกาลกินเจ (9 วัน)', vegCont: 'เทศกาลกินเจ (ต่อเนื่อง)',
+      wanPhra: 'วันพระ', wanPhraChip: '☸ วันพระ – ', wanKon: 'วันโกน – ก่อนวันพระหนึ่งวัน',
+      tagPublic: 'วันหยุดราชการ', tagBuddhist: 'วันสำคัญทางพระพุทธศาสนา', tagObs: 'วันสำคัญ',
+      myDay: 'กิจกรรมของฉัน', edit: 'แก้ไขสัญลักษณ์', noSym: 'ยังไม่มีสัญลักษณ์ แตะ “แก้ไขสัญลักษณ์” เพื่อเพิ่ม',
+      calc: function (y) { return 'วันทางจันทรคติของปี พ.ศ. ' + (y + 543) + ' คำนวณจากหลักเกณฑ์ของปฏิทิน ทางราชการประกาศวันอย่างเป็นทางการเป็นรายปี วันสำคัญบางวันจึงอาจคลาดเคลื่อนได้หนึ่งวัน'; },
+      openFull: 'ดูแบบเต็ม', symTitle: 'สัญลักษณ์ของคุณ', del: 'ลบ', none: 'ยังไม่มีสัญลักษณ์', add: 'เพิ่ม',
+      namePh: 'ชื่อ เช่น นั่งสมาธิ',
+      hint: 'เคล็ดลับ: ใช้แป้นพิมพ์อีโมจิบนโทรศัพท์เพื่อเลือกสัญลักษณ์ เมื่อลบสัญลักษณ์ใด สัญลักษณ์นั้นจะถูกลบออกจากทุกวันที่เคยบันทึกไว้ด้วย',
+      exp: 'สำรองข้อมูล', imp: 'กู้คืนข้อมูล',
+      confirmDel: function (n, c) { return 'ต้องการลบ “' + n + '” หรือไม่ สัญลักษณ์นี้ถูกใช้อยู่ ' + c + ' วัน และจะถูกลบออกจากวันเหล่านั้นด้วย'; },
+      confirmImp: 'ต้องการแทนที่ข้อมูลทั้งหมดในเครื่องนี้ด้วยข้อมูลสำรองหรือไม่', badFile: 'ไฟล์นี้ไม่ใช่ไฟล์สำรองข้อมูลของปฏิทินไทย',
+      prev: 'ก่อนหน้า', next: 'ถัดไป', close: 'ปิด', appTitle: 'ปฏิทินไทย'
+    }
+  };
+  var S = STR[lang];
+  var MONTHS_TH_SHORT = ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+  var DAYS_TH_SHORT = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+  var COLORS_TH = ['สีแดง', 'สีเหลือง', 'สีชมพู', 'สีเขียว', 'สีส้ม', 'สีฟ้า', 'สีม่วง'];
+  var ANIMALS_TH = ['หนู', 'วัว', 'เสือ', 'กระต่าย', 'งูใหญ่', 'งูเล็ก', 'ม้า', 'แพะ', 'ลิง', 'ไก่', 'สุนัข', 'หมู'];
+  var PHASE_TH = { full: 'พระจันทร์เต็มดวง', 'new': 'คืนเดือนดับ', first: 'พระจันทร์ครึ่งดวง ข้างขึ้น', third: 'พระจันทร์ครึ่งดวง ข้างแรม' };
+
+  function actName(a) {
+    var d = DEFAULTS.filter(function (x) { return x.id === a.id; })[0];
+    return TH && d && d.name === a.name ? DEFAULTS_TH[a.id] : a.name;
+  }
+  function hName(x) { return TH ? x.th : x.en; }
+  function hShort(x) { return TH ? x.th.split(' (')[0].split(' / ')[0] : x.en.split(' – ')[0]; }
+  function lunarPlainTh(l) { return (l.waxing ? 'ขึ้น ' : 'แรม ') + l.kham + ' ค่ำ เดือน ' + (l.month === 88 ? '8 หลัง' : l.month); }
+  function lunarMain(l) { return TH ? lunarPlainTh(l) : T.lunarEn(l); }
+  function lunarSub(l) { return TH ? T.lunarEn(l) : T.lunarTh(l); }
+  function dowShort(wd) { return TH ? DAYS_TH_SHORT[wd] : N.daysEn[wd].slice(0, 3); }
 
   /* ---------- state ---------- */
   var now = new Date();
   var today = T.dn(now.getFullYear(), now.getMonth() + 1, now.getDate());
   var MIN = T.dn(T.MIN_YEAR, 1, 1), MAX = T.dn(T.MAX_YEAR, 12, 31);
-  var state = { view: 'month', cur: today, sheet: null };
-  try { var v = localStorage.getItem(STORE + '.view'); if (v) state.view = v; } catch (e) { /* ignore */ }
+  var state = { view: pref('view') || 'month', cur: today, sheet: null };
 
   /* ---------- moon drawing ---------- */
   // p: 0 new … 0.5 full … 1 new
@@ -57,8 +118,9 @@
   }
   function isPub(i) { return i.holidays.some(function (h) { return h.type === 'public'; }); }
   function lunShort(l) {
-    if (l.day === 1) return 'เดือน ' + (l.month === 88 ? '๘๘' : N.thDigits(l.month));
-    return (l.waxing ? '↑' : '↓') + N.thDigits(l.kham);
+    var num = TH ? String : N.thDigits;
+    if (l.day === 1) return 'เดือน ' + (l.month === 88 ? num(8) + num(8) : num(l.month));
+    return (l.waxing ? '↑' : '↓') + num(l.kham);
   }
 
   /* ---------- views ---------- */
@@ -66,22 +128,25 @@
     var o = T.fromDn(state.cur), first = T.dn(o.y, o.m, 1), start = first - T.fromDn(first).wd;
     var nextFirst = o.m === 12 ? T.dn(o.y + 1, 1, 1) : T.dn(o.y, o.m + 1, 1);
     var weeks = Math.ceil((nextFirst - start) / 7), h = '<div class="dow">';
-    for (var w = 0; w < 7; w++) h += '<span><b>' + N.daysEn[w].slice(0, 3) + '</b>' + N.daysThShort[w] + '<br><i style="background:' + N.dayColors[w][1] + '"></i></span>';
+    for (var w = 0; w < 7; w++) {
+      h += '<span><b>' + (TH ? DAYS_TH_SHORT[w] : N.daysEn[w].slice(0, 3)) + '</b>' + (TH ? N.daysEn[w].slice(0, 3) : N.daysThShort[w]) +
+        '<br><i style="background:' + N.dayColors[w][1] + '"></i></span>';
+    }
     h += '</div><div class="grid">';
     for (var n = start; n < start + weeks * 7; n++) {
       var i = inf(n), d = T.fromDn(n), top = topHoliday(i), acts = actsOn(i.key);
       var cls = 'cell' + (d.m !== o.m ? ' other' : '') + (n === today ? ' today' : '') + (n === state.cur ? ' sel' : '') + (isPub(i) ? ' pub' : '') + (acts.length ? ' has-acts' : '');
-      h += '<button class="' + cls + '" data-n="' + n + '" aria-label="' + d.d + ' ' + N.monthsEn[d.m - 1] + '">' +
+      h += '<button class="' + cls + '" data-n="' + n + '" data-d="' + i.key + '" aria-label="' + d.d + ' ' + (TH ? N.monthsTh : N.monthsEn)[d.m - 1] + '">' +
         '<span class="row"><span class="g">' + d.d + '</span>' + (i.phase ? moon(PHASE_P[i.phase], 14) : '') + '</span>' +
         '<span class="lun">' + lunShort(i.lunar) + '</span>' +
-        (top ? '<span class="hol ' + top.type + '">' + esc(top.en.split(' – ')[0]) + '</span>' : '') +
+        (top ? '<span class="hol ' + top.type + '">' + esc(hShort(top)) + '</span>' : '') +
         (acts.length ? '<span class="acts' + (acts.length < 3 ? ' big' : '') + '">' + acts.slice(0, acts.length > 3 ? 2 : 3).map(function (a) { return '<i>' + esc(a.icon) + '</i>'; }).join('') +
           (acts.length > 3 ? '<em>+' + (acts.length - 2) + '</em>' : '') + '</span>' : '') +
         '</button>';
     }
     h += '</div><div class="legend">' +
-      '<span>' + moon(0.5, 14) + ' full</span><span>' + moon(0, 14) + ' new</span><span>' + moon(0.25, 14) + moon(0.75, 14) + ' half moon – all four are Wan Phra</span>' +
-      '<span><i class="sw" style="background:var(--red)"></i> public holiday</span><span>↑ waxing ↓ waning day</span></div>';
+      '<span>' + moon(0.5, 14) + ' ' + S.full + '</span><span>' + moon(0, 14) + ' ' + S['new'] + '</span><span>' + moon(0.25, 14) + moon(0.75, 14) + ' ' + S.half + '</span>' +
+      '<span><i class="sw" style="background:var(--red)"></i> ' + S.pub + '</span><span>' + S.waxwan + '</span></div>';
     return h + agenda(o.y, o.m);
   }
 
@@ -92,14 +157,14 @@
       var i = T.info(y, m, d);
       if (i.phase) phra.push(d);
       i.holidays.forEach(function (x) {
-        var name = x.en, veg = /^Vegetarian Festival \(day (\d)/.exec(name);
-        if (veg) { if (veg[1] !== '1' && d !== 1) return; name = veg[1] === '1' ? 'Vegetarian Festival begins (9 days)' : 'Vegetarian Festival continues'; }
-        rows += '<button class="arow ' + x.type + '" data-n="' + i.n + '"><b>' + d + '</b><span>' + N.daysEn[i.wd].slice(0, 3) + '</span><em>' + esc(name) + '</em></button>';
+        var name = hName(x), veg = /^Vegetarian Festival \(day (\d)/.exec(x.en);
+        if (veg) { if (veg[1] !== '1' && d !== 1) return; name = veg[1] === '1' ? S.vegStart : S.vegCont; }
+        rows += '<button class="arow ' + x.type + '" data-n="' + i.n + '"><b>' + d + '</b><span>' + dowShort(i.wd) + '</span><em>' + esc(name) + '</em></button>';
       });
     }
-    return '<section class="agenda"><h3>' + N.monthsEn[m - 1] + ' at a glance</h3>' +
-      '<p class="phra">☸ Wan Phra (Buddhist holy days): <b>' + phra.join(', ') + '</b></p>' +
-      (rows || '<p class="note">No holidays this month.</p>') + '</section>';
+    return '<section class="agenda"><h3>' + S.glance((TH ? N.monthsTh : N.monthsEn)[m - 1]) + '</h3>' +
+      '<p class="phra">' + S.phraList + ' <b>' + phra.join(', ') + '</b></p>' +
+      (rows || '<p class="note">' + S.noHol + '</p>') + '</section>';
   }
 
   function renderWeek() {
@@ -107,10 +172,10 @@
     for (var n = start; n < start + 7; n++) {
       var i = inf(n), d = T.fromDn(n), acts = actsOn(i.key);
       h += '<button class="wrow' + (isPub(i) ? ' pub' : '') + (n === today ? ' today' : '') + '" data-n="' + n + '">' +
-        '<span class="wdate" style="border-color:' + N.dayColors[d.wd][1] + '"><small>' + N.daysEn[d.wd].slice(0, 3) + '</small><b>' + d.d + '</b><small>' + N.daysThShort[d.wd] + '</small></span>' +
-        '<span class="wbody"><span class="l">' + moonOfLunar(i.lunar, 16) + esc(T.lunarEn(i.lunar)) +
-        (i.phase ? ' · <b style="color:var(--gold)">Wan Phra</b>' : '') + '</span>' +
-        i.holidays.map(function (x) { return '<div class="h" style="color:var(--' + (x.type === 'public' ? 'red' : x.type === 'buddhist' ? 'gold' : 'obs') + ')">' + esc(x.en) + '</div>'; }).join('') +
+        '<span class="wdate" style="border-color:' + N.dayColors[d.wd][1] + '"><small>' + (TH ? DAYS_TH_SHORT[d.wd] : N.daysEn[d.wd].slice(0, 3)) + '</small><b>' + d.d + '</b><small>' + (TH ? N.daysEn[d.wd].slice(0, 3) : N.daysThShort[d.wd]) + '</small></span>' +
+        '<span class="wbody"><span class="l">' + moonOfLunar(i.lunar, 16) + esc(lunarMain(i.lunar)) +
+        (i.phase ? ' · <b style="color:var(--gold)">' + S.wanPhra + '</b>' : '') + '</span>' +
+        i.holidays.map(function (x) { return '<div class="h" style="color:var(--' + (x.type === 'public' ? 'red' : x.type === 'buddhist' ? 'gold' : 'obs') + ')">' + esc(hName(x)) + '</div>'; }).join('') +
         (acts.length ? '<div class="a">' + acts.map(function (a) { return esc(a.icon); }).join(' ') + '</div>' : '') +
         '</span></button>';
     }
@@ -119,49 +184,69 @@
 
   function dayCard(n, full) {
     var i = inf(n), d = T.fromDn(n), l = i.lunar, col = N.dayColors[d.wd], ids = data.log[i.key] || [];
+    var dateEn = d.d + ' ' + N.monthsEn[d.m - 1] + ' ' + d.y;
+    var dateTh = TH ? d.d + ' ' + N.monthsTh[d.m - 1] + ' พ.ศ. ' + i.be : N.thDigits(d.d) + ' ' + N.monthsTh[d.m - 1] + ' พ.ศ. ' + N.thDigits(i.be);
     var h = '<section class="card"><div class="day-head"><div class="day-num' + (isPub(i) ? ' pub' : '') + '">' + d.d + '</div><div class="day-meta">' +
-      '<div class="w">' + N.daysEn[d.wd] + ' · ' + N.daysTh[d.wd] + '</div>' +
-      '<div class="t">' + d.d + ' ' + N.monthsEn[d.m - 1] + ' ' + d.y + '</div>' +
-      '<div class="t">' + N.thDigits(d.d) + ' ' + N.monthsTh[d.m - 1] + ' พ.ศ. ' + N.thDigits(i.be) + '</div></div></div>' +
-      '<div class="chips"><span class="chip">BE ' + i.be + '</span>' +
-      '<span class="chip">' + N.zodiacIcon[i.zodiac] + ' Year of the ' + N.zodiacEn[i.zodiac] + ' · ปี' + N.zodiacTh[i.zodiac] + '</span>' +
-      '<span class="chip"><i style="background:' + col[1] + '"></i>Day colour: ' + col[0] + '</span>' +
-      (n === today ? '<span class="chip gold">Today</span>' : '') + '</div>' +
-      '<div class="lunar">' + moonOfLunar(l, full ? 56 : 40) + '<div><div class="en">' + esc(T.lunarEn(l)) + '</div><div class="th">' + T.lunarTh(l) + '</div>' +
-      (i.phase ? '<div class="chips" style="margin-top:6px"><span class="chip gold">☸ Wan Phra · วันพระ – ' + N.phaseEn[i.phase] + '</span></div>' : '') +
-      (i.wanKon ? '<div class="chips" style="margin-top:6px"><span class="chip">Wan Kon · วันโกน – eve of Wan Phra</span></div>' : '') + '</div></div>';
+      '<div class="w">' + (TH ? N.daysTh[d.wd] + ' · ' + N.daysEn[d.wd] : N.daysEn[d.wd] + ' · ' + N.daysTh[d.wd]) + '</div>' +
+      '<div class="t">' + (TH ? dateTh : dateEn) + '</div><div class="t">' + (TH ? dateEn : dateTh) + '</div></div></div>' +
+      '<div class="chips"><span class="chip">' + (TH ? 'ค.ศ. ' + d.y : 'BE ' + i.be) + '</span>' +
+      '<span class="chip">' + N.zodiacIcon[i.zodiac] + ' ' + (TH ? 'ปี' + N.zodiacTh[i.zodiac] + ' (' + ANIMALS_TH[i.zodiac] + ')' : 'Year of the ' + N.zodiacEn[i.zodiac] + ' · ปี' + N.zodiacTh[i.zodiac]) + '</span>' +
+      '<span class="chip"><i style="background:' + col[1] + '"></i>' + (TH ? 'สีประจำวัน: ' + COLORS_TH[d.wd] : 'Day colour: ' + col[0]) + '</span>' +
+      (n === today ? '<span class="chip gold">' + S.today + '</span>' : '') + '</div>' +
+      '<div class="lunar">' + moonOfLunar(l, full ? 56 : 40) + '<div><div class="en">' + esc(lunarMain(l)) + '</div><div class="th">' + esc(lunarSub(l)) + '</div>' +
+      (i.phase ? '<div class="chips" style="margin-top:6px"><span class="chip gold">' + S.wanPhraChip + (TH ? PHASE_TH[i.phase] : N.phaseEn[i.phase]) + '</span></div>' : '') +
+      (i.wanKon ? '<div class="chips" style="margin-top:6px"><span class="chip">' + S.wanKon + '</span></div>' : '') + '</div></div>';
     if (i.holidays.length) {
       h += '<ul class="hlist">' + i.holidays.map(function (x) {
-        return '<li class="' + x.type + '"><span class="tag">' + (x.type === 'public' ? 'Public holiday' : x.type === 'buddhist' ? 'Buddhist day' : 'Observance') + '</span>' +
-          '<b>' + esc(x.en) + '</b><span class="th">' + esc(x.th) + '</span>' + (x.note ? '<p>' + esc(x.note) + '</p>' : '') + '</li>';
+        var note = TH ? x.noteTh.replace(/[๐-๙]/g, function (c) { return '๐๑๒๓๔๕๖๗๘๙'.indexOf(c); }) : x.note;
+        return '<li class="' + x.type + '"><span class="tag">' + (x.type === 'public' ? S.tagPublic : x.type === 'buddhist' ? S.tagBuddhist : S.tagObs) + '</span>' +
+          '<b>' + esc(TH ? x.th : x.en) + '</b><span class="th">' + esc(TH ? x.en : x.th) + '</span>' + (note ? '<p>' + esc(note) + '</p>' : '') + '</li>';
       }).join('') + '</ul>';
     }
-    h += '<div class="sec"><h3>My day</h3><button class="link" data-act="symbols">Edit symbols</button></div><div class="toggles">' +
+    h += '<div class="sec"><h3>' + S.myDay + '</h3><button class="link" data-act="symbols">' + S.edit + '</button></div><div class="toggles">' +
       data.acts.map(function (a) {
-        return '<button class="tog" data-toggle="' + esc(a.id) + '" data-n="' + n + '" aria-pressed="' + (ids.indexOf(a.id) >= 0) + '"><span>' + esc(a.icon) + '</span><small>' + esc(a.name) + '</small></button>';
+        return '<button class="tog" data-toggle="' + esc(a.id) + '" data-n="' + n + '" aria-pressed="' + (ids.indexOf(a.id) >= 0) + '"><span>' + esc(a.icon) + '</span><small>' + esc(actName(a)) + '</small></button>';
       }).join('') + '</div>' +
-      (data.acts.length ? '' : '<p class="note">No symbols yet – tap “Edit symbols” to add some.</p>');
-    if (!T.official(d.y)) h += '<p class="note">Lunar dates for ' + d.y + ' are calculated from the calendar rules. Thailand confirms the official dates year by year, so a festival can occasionally differ by a day.</p>';
+      (data.acts.length ? '' : '<p class="note">' + S.noSym + '</p>');
+    if (!T.official(d.y)) h += '<p class="note">' + S.calc(d.y) + '</p>';
     return h + '</section>';
   }
 
   function render() {
     var o = T.fromDn(state.cur), t, s;
     if (state.view === 'month') {
-      t = N.monthsEn[o.m - 1] + ' ' + o.y; s = N.monthsTh[o.m - 1] + ' พ.ศ. ' + N.thDigits(o.y + 543);
+      t = TH ? N.monthsTh[o.m - 1] + ' ' + (o.y + 543) : N.monthsEn[o.m - 1] + ' ' + o.y;
+      s = TH ? N.monthsEn[o.m - 1] + ' ' + o.y : N.monthsTh[o.m - 1] + ' พ.ศ. ' + N.thDigits(o.y + 543);
       $('main').innerHTML = renderMonth();
     } else if (state.view === 'week') {
       var a = T.fromDn(state.cur - o.wd), b = T.fromDn(state.cur - o.wd + 6);
-      t = a.d + (a.m !== b.m ? ' ' + N.monthsEn[a.m - 1].slice(0, 3) : '') + ' – ' + b.d + ' ' + N.monthsEn[b.m - 1].slice(0, 3) + ' ' + b.y;
-      s = N.monthsTh[b.m - 1] + ' พ.ศ. ' + N.thDigits(b.y + 543);
+      var en = a.d + (a.m !== b.m ? ' ' + N.monthsEn[a.m - 1].slice(0, 3) : '') + ' – ' + b.d + ' ' + N.monthsEn[b.m - 1].slice(0, 3) + ' ' + b.y;
+      var th = a.d + (a.m !== b.m ? ' ' + MONTHS_TH_SHORT[a.m - 1] : '') + ' – ' + b.d + ' ' + MONTHS_TH_SHORT[b.m - 1] + ' ' + (b.y + 543);
+      t = TH ? th : en; s = TH ? en : N.monthsTh[b.m - 1] + ' พ.ศ. ' + N.thDigits(b.y + 543);
       $('main').innerHTML = renderWeek();
     } else {
-      t = N.daysEn[o.wd].slice(0, 3) + ' ' + o.d + ' ' + N.monthsEn[o.m - 1] + ' ' + o.y; s = T.lunarTh(T.lunar(state.cur));
+      t = TH ? DAYS_TH_SHORT[o.wd] + ' ' + o.d + ' ' + N.monthsTh[o.m - 1] + ' ' + (o.y + 543) : N.daysEn[o.wd].slice(0, 3) + ' ' + o.d + ' ' + N.monthsEn[o.m - 1] + ' ' + o.y;
+      s = TH ? lunarPlainTh(T.lunar(state.cur)) : T.lunarTh(T.lunar(state.cur));
       $('main').innerHTML = dayCard(state.cur, true);
     }
     $('title').textContent = t; $('subtitle').textContent = s;
     if (state.sheet !== null) $('sheet-body').innerHTML = dayCard(state.sheet, false);
     Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (b) { b.setAttribute('aria-selected', b.dataset.view === state.view); });
+  }
+
+  // fixed texts outside the views
+  function applyLang() {
+    S = STR[lang]; TH = lang === 'th';
+    document.documentElement.lang = lang;
+    document.title = S.appTitle;
+    Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (b) { b.textContent = S[b.dataset.view]; });
+    $('today').textContent = S.today; $('lang').textContent = S.switchTo;
+    $('prev').setAttribute('aria-label', S.prev); $('next').setAttribute('aria-label', S.next);
+    $('sheet-prev').setAttribute('aria-label', S.prev); $('sheet-next').setAttribute('aria-label', S.next);
+    $('sheet-close').setAttribute('aria-label', S.close); $('sym-close').setAttribute('aria-label', S.close);
+    $('sheet-full').textContent = S.openFull; $('sym-title').textContent = S.symTitle;
+    $('new-name').placeholder = S.namePh; $('add-sym').textContent = S.add; $('sym-hint').textContent = S.hint;
+    $('export').textContent = S.exp; $('import-label').textContent = S.imp;
   }
 
   function go(n) { state.cur = Math.max(MIN, Math.min(MAX, n)); render(); }
@@ -173,12 +258,16 @@
     var last = T.fromDn(T.dn(y, m + 1, 0)).d;
     go(T.dn(y, m, Math.min(o.d, last)));
   }
-  function setView(v) { state.view = v; try { localStorage.setItem(STORE + '.view', v); } catch (e) { /* ignore */ } render(); window.scrollTo(0, 0); }
+  function setView(v) { state.view = v; pref('view', v); render(); window.scrollTo(0, 0); }
 
   /* ---------- events ---------- */
   $('prev').onclick = function () { step(-1); };
   $('next').onclick = function () { step(1); };
   $('today').onclick = function () { go(today); };
+  $('lang').onclick = function () {
+    lang = TH ? 'en' : 'th'; pref('lang', lang);
+    applyLang(); render(); if ($('symbols').open) renderSymbols();
+  };
   document.querySelector('.seg').onclick = function (e) { var b = e.target.closest('button'); if (b) setView(b.dataset.view); };
 
   // Day pop-up (bottom sheet)
@@ -224,14 +313,15 @@
   /* ---------- symbols dialog ---------- */
   function renderSymbols() {
     $('sym-list').innerHTML = data.acts.map(function (a) {
-      return '<li><span>' + esc(a.icon) + '</span><b>' + esc(a.name) + '</b><button type="button" class="del" data-del="' + esc(a.id) + '">Delete</button></li>';
-    }).join('') || '<li><b style="color:var(--muted)">No symbols yet</b></li>';
+      return '<li><span>' + esc(a.icon) + '</span><b>' + esc(actName(a)) + '</b><button type="button" class="del" data-del="' + esc(a.id) + '">' + S.del + '</button></li>';
+    }).join('') || '<li><b style="color:var(--muted)">' + S.none + '</b></li>';
   }
+  $('sym-close').onclick = function () { $('symbols').close(); };
   $('sym-list').onclick = function (e) {
     var b = e.target.closest('[data-del]'); if (!b) return;
     var id = b.dataset.del, a = data.acts.filter(function (x) { return x.id === id; })[0];
     var used = Object.keys(data.log).filter(function (k) { return data.log[k].indexOf(id) >= 0; });
-    if (used.length && !confirm('Delete “' + a.name + '”? It is used on ' + used.length + ' day' + (used.length > 1 ? 's' : '') + ' and will be removed from them.')) return;
+    if (used.length && !confirm(S.confirmDel(actName(a), used.length))) return;
     data.acts = data.acts.filter(function (x) { return x.id !== id; });
     used.forEach(function (k) { data.log[k] = data.log[k].filter(function (x) { return x !== id; }); if (!data.log[k].length) delete data.log[k]; });
     save(); renderSymbols(); render();
@@ -259,13 +349,14 @@
       try {
         var d = JSON.parse(r.result);
         if (!Array.isArray(d.acts) || typeof d.log !== 'object') throw 0;
-        if (!confirm('Replace everything on this device with the backup?')) return;
+        if (!confirm(S.confirmImp)) return;
         data = { acts: d.acts, log: d.log || {} }; save(); renderSymbols(); render();
-      } catch (e) { alert('That file is not a Thai Calendar backup.'); }
+      } catch (e) { alert(S.badFile); }
     };
     r.readAsText(f); this.value = '';
   };
 
+  applyLang();
   render();
   // keep "today" right when the app is reopened on another day
   document.addEventListener('visibilitychange', function () {

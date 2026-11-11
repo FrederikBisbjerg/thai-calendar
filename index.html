@@ -32,6 +32,7 @@
       <button role="tab" data-view="month">Month</button>
     </div>
     <button class="pill" id="today">Today</button>
+    <button class="pill" id="lang" aria-label="Language / ภาษา">ไทย</button>
   </div>
 </header>
 
@@ -50,8 +51,8 @@
 <dialog id="symbols">
   <form method="dialog" class="sheet">
     <div class="sheet-head">
-      <h2>Your symbols</h2>
-      <button class="icon-btn small" value="close" aria-label="Close">✕</button>
+      <h2 id="sym-title">Your symbols</h2>
+      <button type="button" class="icon-btn small" id="sym-close" aria-label="Close">✕</button>
     </div>
     <ul id="sym-list"></ul>
     <div class="add-row">
@@ -59,10 +60,10 @@
       <input id="new-name" maxlength="24" placeholder="Name, e.g. Meditation" aria-label="Name">
       <button type="button" class="pill solid" id="add-sym">Add</button>
     </div>
-    <p class="hint">Tip: use your phone's emoji keyboard for the symbol. Deleting a symbol also removes it from the days where you used it.</p>
+    <p class="hint" id="sym-hint">Tip: use your phone's emoji keyboard for the symbol. Deleting a symbol also removes it from the days where you used it.</p>
     <div class="backup">
       <button type="button" class="pill" id="export">Export backup</button>
-      <label class="pill">Import backup<input type="file" id="import" accept="application/json" hidden></label>
+      <label class="pill"><span id="import-label">Import backup</span><input type="file" id="import" accept="application/json" hidden></label>
     </div>
   </form>
 </dialog>

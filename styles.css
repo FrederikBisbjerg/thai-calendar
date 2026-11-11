@@ -38,11 +38,11 @@ button { cursor: pointer; }
   color: inherit; font-size: 24px; line-height: 1; display: grid; place-items: center; padding: 0 0 3px;
 }
 .icon-btn.small { width: 32px; height: 32px; font-size: 14px; padding: 0; background: var(--line); color: var(--ink); }
-.controls { display: flex; gap: 8px; margin-top: 10px; align-items: center; }
+.controls { display: flex; gap: 6px; margin-top: 10px; align-items: center; }
 .seg { flex: 1; display: flex; background: rgba(0, 0, 0, .22); border-radius: 10px; padding: 3px; }
 .seg button { flex: 1; border: 0; background: transparent; color: inherit; padding: 6px 0; border-radius: 8px; font-size: 14px; font-weight: 600; opacity: .8; }
 .seg button[aria-selected="true"] { background: var(--brand-ink); color: #6b1320; opacity: 1; }
-.pill { border: 1px solid currentColor; background: transparent; border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-block; }
+.pill { border: 1px solid currentColor; background: transparent; border-radius: 999px; padding: 6px 12px; white-space: nowrap; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-block; }
 .pill.solid { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
 
 main { padding: 12px 10px 0; }

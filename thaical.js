@@ -143,10 +143,10 @@
     [4, 15, 'public', 'Songkran – Thai New Year’s Day', 'วันสงกรานต์ (วันเถลิงศก)'],
     [5, 1, 'public', 'National Labour Day', 'วันแรงงานแห่งชาติ'],
     [5, 4, 'public', 'Coronation Day', 'วันฉัตรมงคล', 2019],
-    [6, 3, 'public', "Queen Suthida's Birthday", 'วันเฉลิมพระชนมพรรษาสมเด็จพระราชินี', 2019],
+    [6, 3, 'public', "Queen Suthida's Birthday", 'วันเฉลิมพระชนมพรรษาสมเด็จพระนางเจ้าฯ พระบรมราชินี', 2019],
     [6, 9, 'observance', 'Ananda Mahidol Day', 'วันอานันทมหิดล'],
     [6, 26, 'observance', 'Sunthorn Phu Day', 'วันสุนทรภู่'],
-    [7, 28, 'public', "King Vajiralongkorn's Birthday", 'วันเฉลิมพระชนมพรรษา ร.10', 2017],
+    [7, 28, 'public', "King Vajiralongkorn's Birthday", 'วันเฉลิมพระชนมพรรษาพระบาทสมเด็จพระเจ้าอยู่หัว', 2017],
     [7, 29, 'observance', 'National Thai Language Day', 'วันภาษาไทยแห่งชาติ'],
     [8, 12, 'public', "Mother's Day – Queen Sirikit's Birthday", 'วันแม่แห่งชาติ'],
     [8, 18, 'observance', 'National Science Day', 'วันวิทยาศาสตร์แห่งชาติ'],
@@ -179,12 +179,28 @@
   function chineseMonthStart(y, lon, m, d) { return newMoonOnOrBefore(termDay(y, lon, m, d), 8); }
   function vegetarianStart(y) { return chineseMonthStart(y, 210, 10, 23); }   // Chinese month 9
 
+  var NOTES_TH = {
+    'Makha Bucha': 'วันเพ็ญเดือน ๓ พระพุทธเจ้าทรงแสดงโอวาทปาฏิโมกข์แก่พระอรหันต์ ๑,๒๕๐ รูป ซึ่งมาประชุมพร้อมกันโดยมิได้นัดหมาย',
+    'Trut Thai': 'วันสิ้นปีตามจันทรคติแบบไทยโบราณ (สิ้นเดือน ๔) ก่อนสงกรานต์ไม่กี่สัปดาห์ นิยมไปทำบุญที่วัด',
+    'Visakha Bucha': 'วันเพ็ญเดือน ๖ วันคล้ายวันประสูติ ตรัสรู้ และปรินิพพานของพระพุทธเจ้า นับเป็นวันสำคัญที่สุดทางพระพุทธศาสนา',
+    'Atthami Bucha': 'หลังวันวิสาขบูชา ๘ วัน เป็นวันถวายพระเพลิงพระพุทธสรีระ',
+    'Asalha Bucha': 'วันเพ็ญเดือน ๘ พระพุทธเจ้าทรงแสดงปฐมเทศนา และเป็นวันที่พระรัตนตรัยครบองค์สาม',
+    'Khao Phansa': 'พระสงฆ์เริ่มอยู่จำพรรษาตลอดสามเดือนในฤดูฝน พุทธศาสนิกชนจำนวนมากตั้งใจงดเหล้าเข้าพรรษา',
+    'Sat Thai': 'ทำบุญอุทิศส่วนกุศลให้บรรพบุรุษในวันสิ้นเดือน ๑๐',
+    'Ok Phansa': 'สิ้นสุดการอยู่จำพรรษาของพระสงฆ์ ตรงกับวันเพ็ญเดือน ๑๑',
+    'Tak Bat Devo': 'ตักบาตรเทโวโรหณะ รำลึกถึงวันที่พระพุทธเจ้าเสด็จลงจากสวรรค์ชั้นดาวดึงส์ และเป็นวันเริ่มเทศกาลทอดกฐิน',
+    'Loy Krathong': 'วันเพ็ญเดือน ๑๒ ลอยกระทงเพื่อบูชาและขอขมาพระแม่คงคา ภาคเหนือมีประเพณียี่เป็ง และเป็นวันสุดท้ายของเทศกาลทอดกฐิน',
+    'Qingming': 'ครอบครัวชาวไทยเชื้อสายจีนไปไหว้และทำความสะอาดสุสานบรรพบุรุษ',
+    'Sat Chin': 'ไหว้บรรพบุรุษและเซ่นไหว้วิญญาณไร้ญาติ ตรงกับวันที่ ๑๕ เดือน ๗ ตามปฏิทินจีน',
+    'Mid-Autumn Moon Festival': 'ไหว้พระจันทร์และรับประทานขนมไหว้พระจันทร์ ตรงกับวันที่ ๑๕ เดือน ๘ ตามปฏิทินจีน',
+    'Vegetarian Festival': 'ถือศีลกินเจ ๙ วัน ในเดือน ๙ ตามปฏิทินจีน'
+  };
   var holCache = {};
   function baseHolidays(y) {            // map key -> [{type, en, th, note}]
     var map = {};
     function add(n, type, en, th, note) {
       var o = fromDn(n); if (o.y !== y) return;
-      var k = keyOf(n); (map[k] = map[k] || []).push({ type: type, en: en, th: th, note: note || '' });
+      var k = keyOf(n); (map[k] = map[k] || []).push({ type: type, en: en, th: th, note: note || '', noteTh: NOTES_TH[en.split(' – ')[0].split(' (')[0]] || '' });
     }
     FIXED.forEach(function (f) { if (!f[5] || y >= f[5]) add(dn(y, f[0], f[1]), f[2], f[3], f[4]); });
     // second Saturday of January
@@ -205,13 +221,13 @@
     add(lunarDay(y, 12, 15), 'observance', 'Loy Krathong', 'วันลอยกระทง', 'Full moon of the 12th lunar month. Krathong are floated to honour the water goddess. Yi Peng lantern festival in the North. Last day for Kathin robe offerings.');
 
     var cny = chineseNewYear(y);
-    add(cny - 1, 'observance', 'Chinese New Year’s Eve (Wan Wai)', 'วันไหว้ (ตรุษจีน)');
+    add(cny - 1, 'observance', 'Chinese New Year’s Eve (Wan Wai)', 'วันไหว้ตรุษจีน');
     add(cny, 'observance', 'Chinese New Year', 'วันตรุษจีน');
     add(termDay(y, 15, 4, 5), 'observance', 'Qingming – ancestor tomb visits', 'วันเช็งเม้ง', 'Thai-Chinese families visit and clean the graves of their ancestors.');
     add(chineseMonthStart(y, 150, 8, 23) + 14, 'observance', 'Sat Chin – Chinese Ghost Festival', 'วันสารทจีน', 'Offerings to ancestors and wandering spirits, 15th day of the 7th Chinese month.');
     add(chineseMonthStart(y, 180, 9, 23) + 14, 'observance', 'Mid-Autumn Moon Festival', 'วันไหว้พระจันทร์', 'Mooncakes and offerings to the moon, 15th day of the 8th Chinese month.');
     var veg = vegetarianStart(y);
-    for (var i = 0; i < 9; i++) add(veg + i, 'observance', 'Vegetarian Festival (day ' + (i + 1) + ' of 9)', 'เทศกาลกินเจ', 'Nine days of plant-based eating (Kin Je) in the 9th Chinese lunar month.');
+    for (var i = 0; i < 9; i++) add(veg + i, 'observance', 'Vegetarian Festival (day ' + (i + 1) + ' of 9)', 'เทศกาลกินเจ (วันที่ ' + (i + 1) + ')', 'Nine days of plant-based eating (Kin Je) in the 9th Chinese lunar month.');
     return map;
   }
   function isPublic(map, k) { return !!map[k] && map[k].some(function (h) { return h.type === 'public'; }); }
@@ -226,12 +242,12 @@
         if (!isPublic(srcMap, k)) return;
         var p = k.split('-'), n = dn(+p[0], +p[1], +p[2]), wd = fromDn(n).wd;
         if (wd !== 0 && wd !== 6) return;
-        var name = srcMap[k].filter(function (h) { return h.type === 'public'; })[0].en;
+        var src = srcMap[k].filter(function (h) { return h.type === 'public'; })[0], name = src.en;
         for (var t = n + 1; ; t++) {
           var o = fromDn(t), tk = keyOf(t);
           if (o.wd === 0 || o.wd === 6 || taken[tk] || isPublic(o.y === y ? map : o.y === y - 1 ? prev : {}, tk)) continue;
           taken[tk] = 1;
-          if (o.y === y) (map[tk] = map[tk] || []).push({ type: 'public', en: 'Substitution day for ' + name.split(' – ')[0], th: 'วันหยุดชดเชย', note: '' });
+          if (o.y === y) (map[tk] = map[tk] || []).push({ type: 'public', en: 'Substitution day for ' + name.split(' – ')[0], th: 'วันหยุดชดเชย' + src.th.split(' (')[0].split(' / ')[0], note: '', noteTh: '' });
           break;
         }
       });
