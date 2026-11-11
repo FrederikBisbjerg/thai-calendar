@@ -1,0 +1,16 @@
+{
+  "name": "Thai Calendar",
+  "short_name": "Thai Calendar",
+  "description": "Perpetual Thai calendar with Buddhist holy days, moon phases, holidays and a personal activity log.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#8f1d2c",
+  "theme_color": "#8f1d2c",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

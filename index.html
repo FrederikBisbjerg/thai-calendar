@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Thai Calendar</title>
+<meta name="description" content="Perpetual Thai calendar with Buddhist holy days, moon phases, Thai holidays and a personal activity log.">
+<meta name="theme-color" content="#8f1d2c">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Thai Calendar">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <button class="icon-btn" id="prev" aria-label="Previous">‹</button>
+    <div class="title">
+      <h1 id="title"></h1>
+      <p id="subtitle"></p>
+    </div>
+    <button class="icon-btn" id="next" aria-label="Next">›</button>
+  </div>
+  <div class="controls">
+    <div class="seg" role="tablist">
+      <button role="tab" data-view="day">Day</button>
+      <button role="tab" data-view="week">Week</button>
+      <button role="tab" data-view="month">Month</button>
+    </div>
+    <button class="pill" id="today">Today</button>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<dialog id="symbols">
+  <form method="dialog" class="sheet">
+    <div class="sheet-head">
+      <h2>Your symbols</h2>
+      <button class="icon-btn small" value="close" aria-label="Close">✕</button>
+    </div>
+    <ul id="sym-list"></ul>
+    <div class="add-row">
+      <input id="new-icon" maxlength="8" placeholder="🙂" aria-label="Symbol (emoji)">
+      <input id="new-name" maxlength="24" placeholder="Name, e.g. Meditation" aria-label="Name">
+      <button type="button" class="pill solid" id="add-sym">Add</button>
+    </div>
+    <p class="hint">Tip: use your phone's emoji keyboard for the symbol. Deleting a symbol also removes it from the days where you used it.</p>
+    <div class="backup">
+      <button type="button" class="pill" id="export">Export backup</button>
+      <label class="pill">Import backup<input type="file" id="import" accept="application/json" hidden></label>
+    </div>
+  </form>
+</dialog>
+
+<script src="thaical.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
