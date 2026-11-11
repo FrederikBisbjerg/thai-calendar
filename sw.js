@@ -1,5 +1,5 @@
 // Offline support.
-var CACHE = 'thaical-v4';
+var CACHE = 'thaical-v5';
 var FILES = ['./', 'index.html', 'styles.css', 'thaical.js', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
@@ -14,7 +14,7 @@ self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
   // Network first so updates show at once; fall back to the cache when offline.
   e.respondWith(caches.open(CACHE).then(function (cache) {
-    return fetch(e.request).then(function (res) {
+    return fetch(e.request, { cache: 'no-cache' }).then(function (res) {
       if (res.ok) cache.put(e.request, res.clone());
       return res;
     }).catch(function () { return cache.match(e.request, { ignoreSearch: true }); });
