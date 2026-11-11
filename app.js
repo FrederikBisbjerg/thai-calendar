@@ -28,7 +28,7 @@
   var now = new Date();
   var today = T.dn(now.getFullYear(), now.getMonth() + 1, now.getDate());
   var MIN = T.dn(T.MIN_YEAR, 1, 1), MAX = T.dn(T.MAX_YEAR, 12, 31);
-  var state = { view: 'month', cur: today };
+  var state = { view: 'month', cur: today, sheet: null };
   try { var v = localStorage.getItem(STORE + '.view'); if (v) state.view = v; } catch (e) { /* ignore */ }
 
   /* ---------- moon drawing ---------- */
@@ -70,25 +70,43 @@
     h += '</div><div class="grid">';
     for (var n = start; n < start + weeks * 7; n++) {
       var i = inf(n), d = T.fromDn(n), top = topHoliday(i), acts = actsOn(i.key);
-      var cls = 'cell' + (d.m !== o.m ? ' other' : '') + (n === today ? ' today' : '') + (n === state.cur ? ' sel' : '') + (isPub(i) ? ' pub' : '');
+      var cls = 'cell' + (d.m !== o.m ? ' other' : '') + (n === today ? ' today' : '') + (n === state.cur ? ' sel' : '') + (isPub(i) ? ' pub' : '') + (acts.length ? ' has-acts' : '');
       h += '<button class="' + cls + '" data-n="' + n + '" aria-label="' + d.d + ' ' + N.monthsEn[d.m - 1] + '">' +
         '<span class="row"><span class="g">' + d.d + '</span>' + (i.phase ? moon(PHASE_P[i.phase], 14) : '') + '</span>' +
         '<span class="lun">' + lunShort(i.lunar) + '</span>' +
         (top ? '<span class="hol ' + top.type + '">' + esc(top.en.split(' – ')[0]) + '</span>' : '') +
-        (acts.length ? '<span class="acts">' + acts.map(function (a) { return esc(a.icon); }).join('') + '</span>' : '') +
+        (acts.length ? '<span class="acts' + (acts.length < 3 ? ' big' : '') + '">' + acts.slice(0, acts.length > 3 ? 2 : 3).map(function (a) { return '<i>' + esc(a.icon) + '</i>'; }).join('') +
+          (acts.length > 3 ? '<em>+' + (acts.length - 2) + '</em>' : '') + '</span>' : '') +
         '</button>';
     }
     h += '</div><div class="legend">' +
       '<span>' + moon(0.5, 14) + ' full</span><span>' + moon(0, 14) + ' new</span><span>' + moon(0.25, 14) + moon(0.75, 14) + ' half moon – all four are Wan Phra</span>' +
       '<span><i class="sw" style="background:var(--red)"></i> public holiday</span><span>↑ waxing ↓ waning day</span></div>';
-    return h + dayCard(state.cur, false);
+    return h + agenda(o.y, o.m);
+  }
+
+  // list of the month's special days, under the grid
+  function agenda(y, m) {
+    var last = T.fromDn(T.dn(y, m + 1, 0)).d, rows = '', phra = [];
+    for (var d = 1; d <= last; d++) {
+      var i = T.info(y, m, d);
+      if (i.phase) phra.push(d);
+      i.holidays.forEach(function (x) {
+        var name = x.en, veg = /^Vegetarian Festival \(day (\d)/.exec(name);
+        if (veg) { if (veg[1] !== '1' && d !== 1) return; name = veg[1] === '1' ? 'Vegetarian Festival begins (9 days)' : 'Vegetarian Festival continues'; }
+        rows += '<button class="arow ' + x.type + '" data-n="' + i.n + '"><b>' + d + '</b><span>' + N.daysEn[i.wd].slice(0, 3) + '</span><em>' + esc(name) + '</em></button>';
+      });
+    }
+    return '<section class="agenda"><h3>' + N.monthsEn[m - 1] + ' at a glance</h3>' +
+      '<p class="phra">☸ Wan Phra (Buddhist holy days): <b>' + phra.join(', ') + '</b></p>' +
+      (rows || '<p class="note">No holidays this month.</p>') + '</section>';
   }
 
   function renderWeek() {
     var start = state.cur - T.fromDn(state.cur).wd, h = '';
     for (var n = start; n < start + 7; n++) {
       var i = inf(n), d = T.fromDn(n), acts = actsOn(i.key);
-      h += '<button class="wrow' + (isPub(i) ? ' pub' : '') + (n === today ? ' today' : '') + '" data-n="' + n + '" data-open="day">' +
+      h += '<button class="wrow' + (isPub(i) ? ' pub' : '') + (n === today ? ' today' : '') + '" data-n="' + n + '">' +
         '<span class="wdate" style="border-color:' + N.dayColors[d.wd][1] + '"><small>' + N.daysEn[d.wd].slice(0, 3) + '</small><b>' + d.d + '</b><small>' + N.daysThShort[d.wd] + '</small></span>' +
         '<span class="wbody"><span class="l">' + moonOfLunar(i.lunar, 16) + esc(T.lunarEn(i.lunar)) +
         (i.phase ? ' · <b style="color:var(--gold)">Wan Phra</b>' : '') + '</span>' +
@@ -110,7 +128,8 @@
       '<span class="chip"><i style="background:' + col[1] + '"></i>Day colour: ' + col[0] + '</span>' +
       (n === today ? '<span class="chip gold">Today</span>' : '') + '</div>' +
       '<div class="lunar">' + moonOfLunar(l, full ? 56 : 40) + '<div><div class="en">' + esc(T.lunarEn(l)) + '</div><div class="th">' + T.lunarTh(l) + '</div>' +
-      (i.phase ? '<div class="chips" style="margin-top:6px"><span class="chip gold">☸ Wan Phra · วันพระ – ' + N.phaseEn[i.phase] + '</span></div>' : '') + '</div></div>';
+      (i.phase ? '<div class="chips" style="margin-top:6px"><span class="chip gold">☸ Wan Phra · วันพระ – ' + N.phaseEn[i.phase] + '</span></div>' : '') +
+      (i.wanKon ? '<div class="chips" style="margin-top:6px"><span class="chip">Wan Kon · วันโกน – eve of Wan Phra</span></div>' : '') + '</div></div>';
     if (i.holidays.length) {
       h += '<ul class="hlist">' + i.holidays.map(function (x) {
         return '<li class="' + x.type + '"><span class="tag">' + (x.type === 'public' ? 'Public holiday' : x.type === 'buddhist' ? 'Buddhist day' : 'Observance') + '</span>' +
@@ -141,6 +160,7 @@
       $('main').innerHTML = dayCard(state.cur, true);
     }
     $('title').textContent = t; $('subtitle').textContent = s;
+    if (state.sheet !== null) $('sheet-body').innerHTML = dayCard(state.sheet, false);
     Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (b) { b.setAttribute('aria-selected', b.dataset.view === state.view); });
   }
 
@@ -161,7 +181,20 @@
   $('today').onclick = function () { go(today); };
   document.querySelector('.seg').onclick = function (e) { var b = e.target.closest('button'); if (b) setView(b.dataset.view); };
 
-  $('main').addEventListener('click', function (e) {
+  // Day pop-up (bottom sheet)
+  function openSheet(n) {
+    state.cur = n; state.sheet = n; render();
+    var d = $('day-sheet'); if (!d.open) d.showModal();
+    d.scrollTop = 0;
+  }
+  $('day-sheet').addEventListener('close', function () { state.sheet = null; });
+  $('day-sheet').addEventListener('click', function (e) { if (e.target === this) this.close(); });   // tap outside
+  $('sheet-close').onclick = function () { $('day-sheet').close(); };
+  $('sheet-prev').onclick = function () { openSheet(Math.max(MIN, state.sheet - 1)); };
+  $('sheet-next').onclick = function () { openSheet(Math.min(MAX, state.sheet + 1)); };
+  $('sheet-full').onclick = function () { $('day-sheet').close(); setView('day'); };
+
+  document.addEventListener('click', function (e) {
     var el = e.target.closest('[data-toggle],[data-act],[data-n]');
     if (!el) return;
     if (el.dataset.toggle) {
@@ -171,11 +204,8 @@
       save(); render();
     } else if (el.dataset.act === 'symbols') {
       renderSymbols(); $('symbols').showModal();
-    } else if (el.dataset.open === 'day') {
-      state.cur = +el.dataset.n; setView('day');
     } else {
-      if (+el.dataset.n === state.cur) return setView('day');   // second tap opens the day
-      go(+el.dataset.n);
+      openSheet(+el.dataset.n);
     }
   });
 
@@ -187,7 +217,7 @@
     if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) step(dx < 0 ? 1 : -1);
   }, { passive: true });
   document.addEventListener('keydown', function (e) {
-    if ($('symbols').open) return;
+    if ($('symbols').open || $('day-sheet').open) return;
     if (e.key === 'ArrowLeft') step(-1); else if (e.key === 'ArrowRight') step(1);
   });
 

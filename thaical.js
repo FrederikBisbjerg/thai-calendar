@@ -122,6 +122,7 @@
     for (var i = 0; i < ms.length; i++) if (ms[i].m === month) return ms[i].start + (day === 'last' ? ms[i].len : day) - 1;
   }
   // 'full' | 'new' | 'first' | 'third' | null  (the four monthly Buddhist holy days)
+  function isWanKon(l) { return l.day === 7 || l.day === 14 || l.day === 22 || l.day === l.len - 1; }
   function phaseOf(l) { return l.day === 15 ? 'full' : l.last ? 'new' : l.day === 8 ? 'first' : l.day === 23 ? 'third' : null; }
 
   /* ---------- Holidays ---------- */
@@ -129,9 +130,13 @@
   var FIXED = [
     [1, 1, 'public', "New Year's Day", 'วันขึ้นปีใหม่'],
     [1, 16, 'observance', "Teachers' Day", 'วันครู'],
+    [1, 17, 'observance', 'King Ramkhamhaeng Day', 'วันพ่อขุนรามคำแหงมหาราช'],
     [1, 18, 'observance', 'Royal Thai Armed Forces Day', 'วันกองทัพไทย'],
+    [2, 3, 'observance', "Thai Veterans' Day", 'วันทหารผ่านศึก'],
     [2, 14, 'observance', "Valentine's Day", 'วันวาเลนไทน์'],
     [3, 13, 'observance', 'National Elephant Day', 'วันช้างไทย'],
+    [3, 31, 'observance', 'King Nangklao (Rama III) Memorial Day', 'วันพระบาทสมเด็จพระนั่งเกล้าเจ้าอยู่หัว'],
+    [4, 2, 'observance', 'Thai Heritage Conservation Day', 'วันอนุรักษ์มรดกไทย'],
     [4, 6, 'public', 'Chakri Memorial Day', 'วันจักรี'],
     [4, 13, 'public', 'Songkran – Thai New Year', 'วันสงกรานต์ (วันมหาสงกรานต์)'],
     [4, 14, 'public', 'Songkran – Family Day', 'วันสงกรานต์ (วันเนา / วันครอบครัว)'],
@@ -139,11 +144,19 @@
     [5, 1, 'public', 'National Labour Day', 'วันแรงงานแห่งชาติ'],
     [5, 4, 'public', 'Coronation Day', 'วันฉัตรมงคล', 2019],
     [6, 3, 'public', "Queen Suthida's Birthday", 'วันเฉลิมพระชนมพรรษาสมเด็จพระราชินี', 2019],
+    [6, 9, 'observance', 'Ananda Mahidol Day', 'วันอานันทมหิดล'],
     [6, 26, 'observance', 'Sunthorn Phu Day', 'วันสุนทรภู่'],
     [7, 28, 'public', "King Vajiralongkorn's Birthday", 'วันเฉลิมพระชนมพรรษา ร.10', 2017],
     [7, 29, 'observance', 'National Thai Language Day', 'วันภาษาไทยแห่งชาติ'],
     [8, 12, 'public', "Mother's Day – Queen Sirikit's Birthday", 'วันแม่แห่งชาติ'],
+    [8, 18, 'observance', 'National Science Day', 'วันวิทยาศาสตร์แห่งชาติ'],
+    [9, 20, 'observance', 'National Youth Day', 'วันเยาวชนแห่งชาติ'],
     [9, 24, 'observance', 'Mahidol Day', 'วันมหิดล'],
+    [9, 28, 'observance', 'Thai National Flag Day', 'วันพระราชทานธงชาติไทย', 2017],
+    [10, 21, 'observance', "National Nurses' Day", 'วันพยาบาลแห่งชาติ'],
+    [11, 25, 'observance', 'King Vajiravudh (Rama VI) Memorial Day', 'วันสมเด็จพระมหาธีรราชเจ้า'],
+    [12, 16, 'observance', 'National Sports Day', 'วันกีฬาแห่งชาติ'],
+    [12, 28, 'observance', 'King Taksin Memorial Day', 'วันสมเด็จพระเจ้าตากสินมหาราช'],
     [10, 13, 'public', 'King Bhumibol Memorial Day', 'วันนวมินทรมหาราช', 2017],
     [10, 23, 'public', 'Chulalongkorn Day', 'วันปิยมหาราช'],
     [12, 5, 'public', "Father's Day – King Bhumibol's Birthday & National Day", 'วันพ่อแห่งชาติ / วันชาติ'],
@@ -156,11 +169,15 @@
     var d = newMoonOnOrBefore(dn(y, 2, 20), 8);
     return d;
   }
-  function vegetarianStart(y) {         // 1st day of Chinese month 9: new moon on/before Shuangjiang (sun 210°)
-    var t = dn(y, 10, 22);
-    while (sunLon(t + 1 - 8 / 24) < 210) t++;      // t = China date containing the term
-    return newMoonOnOrBefore(t, 8);
+  // China date on which the sun reaches ecliptic longitude `lon` (search starts near month m, day d)
+  function termDay(y, lon, m, d) {
+    var t = dn(y, m, d) - 4;
+    while (sunLon(t + 1 - 8 / 24) < lon) t++;
+    return t;
   }
+  // 1st day of the Chinese month that holds the given solar term
+  function chineseMonthStart(y, lon, m, d) { return newMoonOnOrBefore(termDay(y, lon, m, d), 8); }
+  function vegetarianStart(y) { return chineseMonthStart(y, 210, 10, 23); }   // Chinese month 9
 
   var holCache = {};
   function baseHolidays(y) {            // map key -> [{type, en, th, note}]
@@ -177,6 +194,7 @@
     var am = yearType(y) === 2;
     var visM = am ? 7 : 6, asaM = am ? 88 : 8;
     add(lunarDay(y, am ? 4 : 3, 15), 'public', 'Makha Bucha', 'วันมาฆบูชา', 'Full moon of the 3rd lunar month. The Buddha taught the Ovada Patimokkha to 1,250 enlightened monks who gathered without being called.');
+    add(lunarDay(y, 4, 'last'), 'observance', 'Trut Thai – traditional Thai year-end', 'วันตรุษไทย', 'End of the old lunar year (last day of the 4th month), a few weeks before Songkran. Merit-making at the temple.');
     add(lunarDay(y, visM, 15), 'public', 'Visakha Bucha', 'วันวิสาขบูชา', 'Full moon of the 6th lunar month. Birth, enlightenment and passing of the Buddha – the most sacred day of the year.');
     add(lunarDay(y, visM, 23), 'buddhist', 'Atthami Bucha', 'วันอัฏฐมีบูชา', 'Eight days after Visakha Bucha: the cremation of the Buddha.');
     add(lunarDay(y, asaM, 15), 'public', 'Asalha Bucha', 'วันอาสาฬหบูชา', 'Full moon of the 8th lunar month. The Buddha’s first sermon and the founding of the Sangha.');
@@ -184,11 +202,14 @@
     add(lunarDay(y, 10, 'last'), 'buddhist', 'Sat Thai', 'วันสารทไทย', 'Merit-making for ancestors at the end of the 10th lunar month.');
     add(lunarDay(y, 11, 15), 'buddhist', 'Ok Phansa – Buddhist Lent ends', 'วันออกพรรษา', 'End of the rains retreat, full moon of the 11th lunar month.');
     add(lunarDay(y, 11, 16), 'buddhist', 'Tak Bat Devo – Kathin season begins', 'วันตักบาตรเทโว', 'Alms-giving marking the Buddha’s return from heaven. The month of Kathin robe offerings starts.');
-    add(lunarDay(y, 12, 15), 'observance', 'Loy Krathong', 'วันลอยกระทง', 'Full moon of the 12th lunar month. Krathong are floated to honour the water goddess. Yi Peng lantern festival in the North.');
+    add(lunarDay(y, 12, 15), 'observance', 'Loy Krathong', 'วันลอยกระทง', 'Full moon of the 12th lunar month. Krathong are floated to honour the water goddess. Yi Peng lantern festival in the North. Last day for Kathin robe offerings.');
 
     var cny = chineseNewYear(y);
     add(cny - 1, 'observance', 'Chinese New Year’s Eve (Wan Wai)', 'วันไหว้ (ตรุษจีน)');
     add(cny, 'observance', 'Chinese New Year', 'วันตรุษจีน');
+    add(termDay(y, 15, 4, 5), 'observance', 'Qingming – ancestor tomb visits', 'วันเช็งเม้ง', 'Thai-Chinese families visit and clean the graves of their ancestors.');
+    add(chineseMonthStart(y, 150, 8, 23) + 14, 'observance', 'Sat Chin – Chinese Ghost Festival', 'วันสารทจีน', 'Offerings to ancestors and wandering spirits, 15th day of the 7th Chinese month.');
+    add(chineseMonthStart(y, 180, 9, 23) + 14, 'observance', 'Mid-Autumn Moon Festival', 'วันไหว้พระจันทร์', 'Mooncakes and offerings to the moon, 15th day of the 8th Chinese month.');
     var veg = vegetarianStart(y);
     for (var i = 0; i < 9; i++) add(veg + i, 'observance', 'Vegetarian Festival (day ' + (i + 1) + ' of 9)', 'เทศกาลกินเจ', 'Nine days of plant-based eating (Kin Je) in the 9th Chinese lunar month.');
     return map;
@@ -246,7 +267,7 @@
 
   function info(y, m, d) {
     var n = dn(y, m, d), l = lunar(n), k = key(y, m, d);
-    return { key: k, n: n, wd: fromDn(n).wd, lunar: l, phase: phaseOf(l), holidays: holidays(y)[k] || [], be: y + 543, zodiac: zodiac(n) };
+    return { key: k, n: n, wd: fromDn(n).wd, lunar: l, phase: phaseOf(l), wanKon: isWanKon(l), holidays: holidays(y)[k] || [], be: y + 543, zodiac: zodiac(n) };
   }
 
   root.ThaiCal = { dn: dn, fromDn: fromDn, key: key, keyOf: keyOf, info: info, lunar: lunar, lunarDay: lunarDay, yearType: yearType,
