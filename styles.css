@@ -184,3 +184,22 @@ button.title:active { background: rgba(0, 0, 0, .18); }
 .pm.sel { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
 .pick-foot { display: flex; justify-content: space-between; align-items: center; }
 #picker #pick-close { font-size: 16px; padding: 0; }
+
+/* Monthly statistics: one slim line under the grid, tap for the full table */
+.stats { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 8px; padding: 7px 10px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); font: inherit; cursor: pointer; }
+.stats .sline { flex: 1; min-width: 0; display: flex; gap: 14px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; font-size: 17px; }
+.stats .sline::-webkit-scrollbar { display: none; }
+.stats .sline b { margin-left: 4px; font-size: 16px; }
+.stats > i { font-style: normal; color: var(--muted); font-size: 20px; line-height: 1; }
+.stat { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 16.5px; }
+.stat th { font-size: 13.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 600; text-align: right; padding: 4px 6px; }
+.stat th:first-child, .stat td:first-child { text-align: left; }
+.stat td { padding: 9px 6px; border-top: 1px solid var(--line); text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat td:first-child { font-weight: 600; }
+.stat td span { font-size: 20px; margin-right: 4px; }
+
+/* Day notes */
+.daynote { width: 100%; box-sizing: border-box; margin-top: 6px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 12px; padding: 10px; font: inherit; font-size: 16px; line-height: 1.4; resize: none; min-height: 64px; }
+.daynote:focus { outline: 2px solid var(--gold); outline-offset: -1px; }
+.cell .nt { font-style: normal; font-size: 11px; color: var(--gold); margin-right: auto; margin-left: 2px; }
+.wbody .n { font-size: 14.5px; color: var(--muted); margin-top: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }

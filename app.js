@@ -17,11 +17,11 @@
   ];
   var VERSION = 2, ADDED_V2 = ['cake', 'wine'];
   var DEFAULTS_TH = { pray: 'สวดมนต์', fast: 'ถือศีลอด', veg: 'กินมังสวิรัติ', party: 'ปาร์ตี้', gym: 'ออกกำลังกาย', cake: 'วันเกิด', wine: 'ดื่มไวน์' };
-  var data = { v: VERSION, acts: DEFAULTS.slice(), log: {} };
+  var data = { v: VERSION, acts: DEFAULTS.slice(), log: {}, notes: {} };
   try {
     var saved = JSON.parse(localStorage.getItem(STORE));
     if (saved && Array.isArray(saved.acts)) {
-      data = { v: saved.v || 1, acts: saved.acts, log: saved.log || {} };
+      data = { v: saved.v || 1, acts: saved.acts, log: saved.log || {}, notes: saved.notes || {} };
       if (data.v < 2) {   // symbols added later: give them to existing users once
         DEFAULTS.forEach(function (d) {
           if (ADDED_V2.indexOf(d.id) >= 0 && !data.acts.some(function (a) { return a.id === d.id || a.icon === d.icon; })) data.acts.push(d);
@@ -60,7 +60,7 @@
       exp: 'Export backup', imp: 'Import backup',
       confirmDel: function (n, c) { return 'Delete “' + n + '”? It is used on ' + c + ' day' + (c > 1 ? 's' : '') + ' and will be removed from them.'; },
       confirmImp: 'Replace everything on this device with the backup?', badFile: 'That file is not a Thai Calendar backup.',
-      prev: 'Previous', next: 'Next', close: 'Close', jump: 'Choose month and year', prevYear: 'Previous year', nextYear: 'Next year', appTitle: 'Thai Calendar'
+      prev: 'Previous', next: 'Next', close: 'Close', jump: 'Choose month and year', note: 'Note', notePh: 'Write something about this day…', statsOpen: 'Monthly statistics', days: 'Days marked', inYear: 'Whole year', noStats: 'Nothing marked yet.', prevYear: 'Previous year', nextYear: 'Next year', appTitle: 'Thai Calendar'
     },
     th: {
       day: 'วัน', week: 'สัปดาห์', month: 'เดือน', today: 'วันนี้', switchTo: 'EN',
@@ -77,7 +77,7 @@
       exp: 'สำรองข้อมูล', imp: 'กู้คืนข้อมูล',
       confirmDel: function (n, c) { return 'ต้องการลบ “' + n + '” หรือไม่ สัญลักษณ์นี้ถูกใช้อยู่ ' + c + ' วัน และจะถูกลบออกจากวันเหล่านั้นด้วย'; },
       confirmImp: 'ต้องการแทนที่ข้อมูลทั้งหมดในเครื่องนี้ด้วยข้อมูลสำรองหรือไม่', badFile: 'ไฟล์นี้ไม่ใช่ไฟล์สำรองข้อมูลของปฏิทินไทย',
-      prev: 'ก่อนหน้า', next: 'ถัดไป', close: 'ปิด', jump: 'เลือกเดือนและปี', prevYear: 'ปีก่อนหน้า', nextYear: 'ปีถัดไป', appTitle: 'ปฏิทินไทย'
+      prev: 'ก่อนหน้า', next: 'ถัดไป', close: 'ปิด', jump: 'เลือกเดือนและปี', note: 'บันทึก', notePh: 'เขียนบันทึกสำหรับวันนี้…', statsOpen: 'สถิติประจำเดือน', days: 'จำนวนวัน', inYear: 'ทั้งปี', noStats: 'ยังไม่มีการบันทึก', prevYear: 'ปีก่อนหน้า', nextYear: 'ปีถัดไป', appTitle: 'ปฏิทินไทย'
     }
   };
   var S = STR[lang];
@@ -135,6 +135,32 @@
     return (l.waxing ? '↑' : '↓') + num(l.kham);
   }
 
+  // how many days each symbol was marked; prefix is 'YYYY-MM' or 'YYYY'
+  function counts(prefix) {
+    var c = {};
+    Object.keys(data.log).forEach(function (k) {
+      if (k.indexOf(prefix) === 0) data.log[k].forEach(function (id) { c[id] = (c[id] || 0) + 1; });
+    });
+    return c;
+  }
+  function statsStrip(y, m) {
+    var c = counts(T.key(y, m, 1).slice(0, 7));
+    var items = data.acts.filter(function (a) { return c[a.id]; });
+    if (!items.length) return '';
+    return '<button class="stats" data-act="stats" aria-label="' + S.statsOpen + '"><span class="sline">' +
+      items.map(function (a) { return '<span>' + esc(a.icon) + '<b>' + c[a.id] + '</b></span>'; }).join('') + '</span><i aria-hidden="true">›</i></button>';
+  }
+  function renderStats() {
+    var o = T.fromDn(state.cur), cm = counts(T.key(o.y, o.m, 1).slice(0, 7)), cy = counts(String(o.y) + '-');
+    var mName = (TH ? N.monthsTh : N.monthsEn)[o.m - 1], yName = TH ? 'พ.ศ. ' + (o.y + 543) : String(o.y);
+    $('stats-title').textContent = mName + ' ' + (TH ? o.y + 543 : o.y);
+    var rows = data.acts.filter(function (a) { return cy[a.id]; });
+    $('stats-body').innerHTML = rows.length ? '<table class="stat"><thead><tr><th>' + S.days + '</th><th>' + esc(TH ? MONTHS_TH_SHORT[o.m - 1] : mName.slice(0, 3)) + '</th><th>' + yName + '</th></tr></thead><tbody>' +
+      rows.map(function (a) {
+        return '<tr><td><span>' + esc(a.icon) + '</span> ' + esc(actName(a)) + '</td><td>' + (cm[a.id] || '–') + '</td><td>' + cy[a.id] + '</td></tr>';
+      }).join('') + '</tbody></table>' : '<p class="note">' + S.noStats + '</p>';
+  }
+
   /* ---------- views ---------- */
   function renderMonth() {
     var o = T.fromDn(state.cur), first = T.dn(o.y, o.m, 1), start = first - T.fromDn(first).wd;
@@ -149,14 +175,14 @@
       var i = inf(n), d = T.fromDn(n), top = topHoliday(i), acts = actsOn(i.key);
       var cls = 'cell' + (d.m !== o.m ? ' other' : '') + (n === today ? ' today' : '') + (n === state.cur ? ' sel' : '') + (isPub(i) ? ' pub' : '') + (acts.length ? ' has-acts' : '');
       h += '<button class="' + cls + '" data-n="' + n + '" data-d="' + i.key + '" aria-label="' + d.d + ' ' + (TH ? N.monthsTh : N.monthsEn)[d.m - 1] + '">' +
-        '<span class="row"><span class="g">' + d.d + '</span>' + (i.phase ? moon(PHASE_P[i.phase], 14) : '') + '</span>' +
+        '<span class="row"><span class="g">' + d.d + '</span>' + (data.notes[i.key] ? '<i class="nt" aria-hidden="true">✎</i>' : '') + (i.phase ? moon(PHASE_P[i.phase], 14) : '') + '</span>' +
         '<span class="lun">' + lunShort(i.lunar) + '</span>' +
         (top ? '<span class="hol ' + top.type + '">' + esc(hShort(top)) + '</span>' : '') +
         (acts.length ? '<span class="acts' + (acts.length < 3 ? ' big' : '') + '">' + acts.slice(0, acts.length > 3 ? 2 : 3).map(function (a) { return '<i>' + esc(a.icon) + '</i>'; }).join('') +
           (acts.length > 3 ? '<em>+' + (acts.length - 2) + '</em>' : '') + '</span>' : '') +
         '</button>';
     }
-    h += '</div><div class="legend">' +
+    h += '</div>' + statsStrip(o.y, o.m) + '<div class="legend">' +
       '<span>' + moon(0.5, 14) + ' ' + S.full + '</span><span>' + moon(0, 14) + ' ' + S['new'] + '</span><span>' + moon(0.25, 14) + moon(0.75, 14) + ' ' + S.half + '</span>' +
       '<span><i class="sw" style="background:var(--red)"></i> ' + S.pub + '</span><span>' + S.waxwan + '</span></div>';
     return h + agenda(o.y, o.m);
@@ -189,6 +215,7 @@
         (i.phase ? ' · <b style="color:var(--gold)">' + S.wanPhra + '</b>' : '') + '</span>' +
         i.holidays.map(function (x) { return '<div class="h" style="color:var(--' + (x.type === 'public' ? 'red' : x.type === 'buddhist' ? 'gold' : 'obs') + ')">' + esc(hName(x)) + '</div>'; }).join('') +
         (acts.length ? '<div class="a">' + acts.map(function (a) { return esc(a.icon); }).join(' ') + '</div>' : '') +
+        (data.notes[i.key] ? '<div class="n">✎ ' + esc(data.notes[i.key]) + '</div>' : '') +
         '</span></button>';
     }
     return h;
@@ -219,7 +246,8 @@
       data.acts.map(function (a) {
         return '<button class="tog" data-toggle="' + esc(a.id) + '" data-n="' + n + '" aria-pressed="' + (ids.indexOf(a.id) >= 0) + '"><span>' + esc(a.icon) + '</span><small>' + esc(actName(a)) + '</small></button>';
       }).join('') + '</div>' +
-      (data.acts.length ? '' : '<p class="note">' + S.noSym + '</p>');
+      (data.acts.length ? '' : '<p class="note">' + S.noSym + '</p>') +
+      '<div class="sec"><h3>' + S.note + '</h3></div><textarea class="daynote" data-note="' + i.key + '" rows="2" maxlength="2000" placeholder="' + esc(S.notePh) + '" aria-label="' + S.note + '">' + esc(data.notes[i.key] || '') + '</textarea>';
     if (!T.official(d.y)) h += '<p class="note">' + S.calc(d.y) + '</p>';
     return h + '</section>';
   }
@@ -242,7 +270,12 @@
       $('main').innerHTML = dayCard(state.cur, true);
     }
     $('title').textContent = t; $('subtitle').textContent = s;
-    if (state.sheet !== null) $('sheet-body').innerHTML = dayCard(state.sheet, false);
+    if (state.sheet !== null) {
+      // keep the note being typed in place when the pop-up is redrawn
+      var f = document.activeElement, keep = f && f.dataset && f.dataset.note ? [f.dataset.note, f.selectionStart, f.selectionEnd] : null;
+      $('sheet-body').innerHTML = dayCard(state.sheet, false);
+      if (keep) { var ta = $('sheet-body').querySelector('[data-note="' + keep[0] + '"]'); if (ta) { ta.focus(); ta.setSelectionRange(keep[1], keep[2]); } }
+    }
     Array.prototype.forEach.call(document.querySelectorAll('.seg button'), function (b) { b.setAttribute('aria-selected', b.dataset.view === state.view); });
   }
 
@@ -256,7 +289,7 @@
     $('prev').setAttribute('aria-label', S.prev); $('next').setAttribute('aria-label', S.next);
     $('sheet-prev').setAttribute('aria-label', S.prev); $('sheet-next').setAttribute('aria-label', S.next);
     $('jump').setAttribute('aria-label', S.jump); $('pick-prev').setAttribute('aria-label', S.prevYear); $('pick-next').setAttribute('aria-label', S.nextYear);
-    $('pick-close').setAttribute('aria-label', S.close); $('pick-today').textContent = S.today;
+    $('pick-close').setAttribute('aria-label', S.close); $('stats-close').setAttribute('aria-label', S.close); $('pick-today').textContent = S.today;
     $('sheet-close').setAttribute('aria-label', S.close); $('sym-close').setAttribute('aria-label', S.close);
     $('sheet-full').textContent = S.openFull; $('sym-title').textContent = S.symTitle;
     $('new-name').placeholder = S.namePh; $('add-sym').textContent = S.add; $('sym-hint').textContent = S.hint;
@@ -307,7 +340,7 @@
   $('today').onclick = function () { go(today); };
   $('lang').onclick = function () {
     lang = TH ? 'en' : 'th'; pref('lang', lang);
-    applyLang(); render(); if ($('symbols').open) renderSymbols(); if ($('picker').open) renderPicker();
+    applyLang(); render(); if ($('symbols').open) renderSymbols(); if ($('picker').open) renderPicker(); if ($('stats').open) renderStats();
   };
   document.querySelector('.seg').onclick = function (e) { var b = e.target.closest('button'); if (b) setView(b.dataset.view); };
 
@@ -317,7 +350,18 @@
     var d = $('day-sheet'); if (!d.open) d.showModal();
     d.scrollTop = 0;
   }
-  $('day-sheet').addEventListener('close', function () { state.sheet = null; });
+  $('day-sheet').addEventListener('close', function () { state.sheet = null; render(); });
+  // notes save as you type
+  function grow(t) { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight + 2, 260) + 'px'; }
+  document.addEventListener('input', function (e) {
+    var t = e.target; if (!t.dataset || !t.dataset.note) return;
+    var v = t.value.replace(/\s+$/, '');
+    if (v) data.notes[t.dataset.note] = t.value; else delete data.notes[t.dataset.note];
+    save(); grow(t);
+  });
+  document.addEventListener('focusin', function (e) { if (e.target.dataset && e.target.dataset.note) grow(e.target); });
+  $('stats-close').onclick = function () { $('stats').close(); };
+  $('stats').addEventListener('click', function (e) { if (e.target === this) this.close(); });
   $('day-sheet').addEventListener('click', function (e) { if (e.target === this) this.close(); });   // tap outside
   $('sheet-close').onclick = function () { $('day-sheet').close(); };
   $('sheet-prev').onclick = function () { openSheet(Math.max(MIN, state.sheet - 1)); };
@@ -332,6 +376,8 @@
       if (at >= 0) ids.splice(at, 1); else ids.push(el.dataset.toggle);
       if (ids.length) data.log[k] = ids; else delete data.log[k];
       save(); render();
+    } else if (el.dataset.act === 'stats') {
+      renderStats(); $('stats').showModal();
     } else if (el.dataset.act === 'symbols') {
       renderSymbols(); $('symbols').showModal();
     } else {
@@ -391,7 +437,7 @@
         var d = JSON.parse(r.result);
         if (!Array.isArray(d.acts) || typeof d.log !== 'object') throw 0;
         if (!confirm(S.confirmImp)) return;
-        data = { acts: d.acts, log: d.log || {} }; save(); renderSymbols(); render();
+        data = { v: d.v || 1, acts: d.acts, log: d.log || {}, notes: (d.notes && typeof d.notes === 'object') ? d.notes : {} }; save(); renderSymbols(); render();
       } catch (e) { alert(S.badFile); }
     };
     r.readAsText(f); this.value = '';
