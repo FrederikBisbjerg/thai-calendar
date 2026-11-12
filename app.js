@@ -11,13 +11,25 @@
     { id: 'fast', icon: '🍽️', name: 'Fasting' },
     { id: 'veg', icon: '🥦', name: 'Vegetarian' },
     { id: 'party', icon: '🎉', name: 'Partying' },
-    { id: 'gym', icon: '🏋️', name: 'Gym' }
+    { id: 'gym', icon: '🏋️', name: 'Gym' },
+    { id: 'cake', icon: '🎂', name: 'Birthday' },
+    { id: 'wine', icon: '🍷', name: 'Wine' }
   ];
-  var DEFAULTS_TH = { pray: 'สวดมนต์', fast: 'ถือศีลอด', veg: 'กินมังสวิรัติ', party: 'ปาร์ตี้', gym: 'ออกกำลังกาย' };
-  var data = { acts: DEFAULTS.slice(), log: {} };
+  var VERSION = 2, ADDED_V2 = ['cake', 'wine'];
+  var DEFAULTS_TH = { pray: 'สวดมนต์', fast: 'ถือศีลอด', veg: 'กินมังสวิรัติ', party: 'ปาร์ตี้', gym: 'ออกกำลังกาย', cake: 'วันเกิด', wine: 'ดื่มไวน์' };
+  var data = { v: VERSION, acts: DEFAULTS.slice(), log: {} };
   try {
     var saved = JSON.parse(localStorage.getItem(STORE));
-    if (saved && Array.isArray(saved.acts)) data = { acts: saved.acts, log: saved.log || {} };
+    if (saved && Array.isArray(saved.acts)) {
+      data = { v: saved.v || 1, acts: saved.acts, log: saved.log || {} };
+      if (data.v < 2) {   // symbols added later: give them to existing users once
+        DEFAULTS.forEach(function (d) {
+          if (ADDED_V2.indexOf(d.id) >= 0 && !data.acts.some(function (a) { return a.id === d.id || a.icon === d.icon; })) data.acts.push(d);
+        });
+        data.v = VERSION;
+        try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e2) { /* ignore */ }
+      }
+    }
   } catch (e) { /* first run or storage blocked */ }
   function save() { try { localStorage.setItem(STORE, JSON.stringify(data)); } catch (e) { /* ignore */ } }
   function actsOn(k) {
@@ -48,7 +60,7 @@
       exp: 'Export backup', imp: 'Import backup',
       confirmDel: function (n, c) { return 'Delete “' + n + '”? It is used on ' + c + ' day' + (c > 1 ? 's' : '') + ' and will be removed from them.'; },
       confirmImp: 'Replace everything on this device with the backup?', badFile: 'That file is not a Thai Calendar backup.',
-      prev: 'Previous', next: 'Next', close: 'Close', appTitle: 'Thai Calendar'
+      prev: 'Previous', next: 'Next', close: 'Close', jump: 'Choose month and year', prevYear: 'Previous year', nextYear: 'Next year', appTitle: 'Thai Calendar'
     },
     th: {
       day: 'วัน', week: 'สัปดาห์', month: 'เดือน', today: 'วันนี้', switchTo: 'EN',
@@ -65,7 +77,7 @@
       exp: 'สำรองข้อมูล', imp: 'กู้คืนข้อมูล',
       confirmDel: function (n, c) { return 'ต้องการลบ “' + n + '” หรือไม่ สัญลักษณ์นี้ถูกใช้อยู่ ' + c + ' วัน และจะถูกลบออกจากวันเหล่านั้นด้วย'; },
       confirmImp: 'ต้องการแทนที่ข้อมูลทั้งหมดในเครื่องนี้ด้วยข้อมูลสำรองหรือไม่', badFile: 'ไฟล์นี้ไม่ใช่ไฟล์สำรองข้อมูลของปฏิทินไทย',
-      prev: 'ก่อนหน้า', next: 'ถัดไป', close: 'ปิด', appTitle: 'ปฏิทินไทย'
+      prev: 'ก่อนหน้า', next: 'ถัดไป', close: 'ปิด', jump: 'เลือกเดือนและปี', prevYear: 'ปีก่อนหน้า', nextYear: 'ปีถัดไป', appTitle: 'ปฏิทินไทย'
     }
   };
   var S = STR[lang];
@@ -243,6 +255,8 @@
     $('today').textContent = S.today; $('lang').textContent = S.switchTo;
     $('prev').setAttribute('aria-label', S.prev); $('next').setAttribute('aria-label', S.next);
     $('sheet-prev').setAttribute('aria-label', S.prev); $('sheet-next').setAttribute('aria-label', S.next);
+    $('jump').setAttribute('aria-label', S.jump); $('pick-prev').setAttribute('aria-label', S.prevYear); $('pick-next').setAttribute('aria-label', S.nextYear);
+    $('pick-close').setAttribute('aria-label', S.close); $('pick-today').textContent = S.today;
     $('sheet-close').setAttribute('aria-label', S.close); $('sym-close').setAttribute('aria-label', S.close);
     $('sheet-full').textContent = S.openFull; $('sym-title').textContent = S.symTitle;
     $('new-name').placeholder = S.namePh; $('add-sym').textContent = S.add; $('sym-hint').textContent = S.hint;
@@ -255,9 +269,36 @@
     if (state.view === 'week') return go(state.cur + 7 * dir);
     var o = T.fromDn(state.cur), m = o.m + dir, y = o.y;
     if (m < 1) { m = 12; y--; } if (m > 12) { m = 1; y++; }
-    var last = T.fromDn(T.dn(y, m + 1, 0)).d;
+    goMonth(y, m);
+  }
+  function goMonth(y, m) {   // same day of the month where it exists
+    var o = T.fromDn(state.cur), last = T.fromDn(T.dn(y, m + 1, 0)).d;
     go(T.dn(y, m, Math.min(o.d, last)));
   }
+
+  /* ---------- month and year picker ---------- */
+  var pickYear = 0;
+  function renderPicker() {
+    var cur = T.fromDn(state.cur), now = T.fromDn(today), h = '';
+    $('pick-year').textContent = TH ? 'พ.ศ. ' + (pickYear + 543) : String(pickYear);
+    $('pick-sub').textContent = TH ? String(pickYear) : 'พ.ศ. ' + (pickYear + 543);
+    $('pick-prev').disabled = pickYear <= T.MIN_YEAR; $('pick-next').disabled = pickYear >= T.MAX_YEAR;
+    for (var m = 1; m <= 12; m++) {
+      var cls = (pickYear === cur.y && m === cur.m ? ' sel' : '') + (pickYear === now.y && m === now.m ? ' now' : '');
+      h += '<button type="button" class="pm' + cls + '" data-m="' + m + '">' + (TH ? MONTHS_TH_SHORT[m - 1] : N.monthsEn[m - 1].slice(0, 3)) + '</button>';
+    }
+    $('pick-months').innerHTML = h;
+  }
+  $('jump').onclick = function () { pickYear = T.fromDn(state.cur).y; renderPicker(); $('picker').showModal(); };
+  $('pick-prev').onclick = function () { pickYear = Math.max(T.MIN_YEAR, pickYear - 1); renderPicker(); };
+  $('pick-next').onclick = function () { pickYear = Math.min(T.MAX_YEAR, pickYear + 1); renderPicker(); };
+  $('pick-months').onclick = function (e) {
+    var b = e.target.closest('[data-m]'); if (!b) return;
+    $('picker').close(); goMonth(pickYear, +b.dataset.m); window.scrollTo(0, 0);
+  };
+  $('pick-today').onclick = function () { $('picker').close(); go(today); };
+  $('pick-close').onclick = function () { $('picker').close(); };
+  $('picker').addEventListener('click', function (e) { if (e.target === this) this.close(); });
   function setView(v) { state.view = v; pref('view', v); render(); window.scrollTo(0, 0); }
 
   /* ---------- events ---------- */
@@ -266,7 +307,7 @@
   $('today').onclick = function () { go(today); };
   $('lang').onclick = function () {
     lang = TH ? 'en' : 'th'; pref('lang', lang);
-    applyLang(); render(); if ($('symbols').open) renderSymbols();
+    applyLang(); render(); if ($('symbols').open) renderSymbols(); if ($('picker').open) renderPicker();
   };
   document.querySelector('.seg').onclick = function (e) { var b = e.target.closest('button'); if (b) setView(b.dataset.view); };
 

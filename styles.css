@@ -167,3 +167,20 @@ dialog.bottom { margin: auto auto 0; width: min(560px, 100vw); max-width: 100vw;
 .sheet-bar #sheet-close { font-size: 14px; padding: 0; }
 .sheet-bar .link { margin-left: auto; margin-right: 6px; }
 #sheet-body .card { border: 0; margin: 0; padding-top: 4px; border-radius: 0; }
+
+/* Tappable title + month and year picker */
+button.title { background: transparent; border: 0; color: inherit; font: inherit; padding: 2px 4px; border-radius: 10px; cursor: pointer; }
+button.title:active { background: rgba(0, 0, 0, .18); }
+.title .caret { font-style: normal; font-size: .7em; margin-left: 6px; opacity: .85; }
+.pick-head { display: flex; align-items: center; gap: 8px; }
+.pick-year { flex: 1; text-align: center; line-height: 1.2; }
+.pick-year b { display: block; font-size: 24px; }
+.pick-year span { font-size: 14.5px; color: var(--muted); }
+#picker .icon-btn.small { width: 44px; height: 44px; font-size: 24px; padding: 0 0 3px; }
+#picker .icon-btn:disabled { opacity: .3; }
+#pick-months { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
+.pm { border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 12px; padding: 14px 0; font-size: 17px; font-weight: 600; cursor: pointer; }
+.pm.now { border-color: var(--gold); }
+.pm.sel { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+.pick-foot { display: flex; justify-content: space-between; align-items: center; }
+#picker #pick-close { font-size: 16px; padding: 0; }

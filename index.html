@@ -20,10 +20,10 @@
 <header class="top">
   <div class="bar">
     <button class="icon-btn" id="prev" aria-label="Previous">‹</button>
-    <div class="title">
-      <h1 id="title"></h1>
+    <button class="title" id="jump" aria-label="Choose month and year" aria-haspopup="dialog">
+      <h1><span id="title"></span><i class="caret" aria-hidden="true">▾</i></h1>
       <p id="subtitle"></p>
-    </div>
+    </button>
     <button class="icon-btn" id="next" aria-label="Next">›</button>
   </div>
   <div class="controls">
@@ -47,6 +47,21 @@
     <button class="icon-btn small" id="sheet-close" aria-label="Close">✕</button>
   </div>
   <div id="sheet-body"></div>
+</dialog>
+
+<dialog id="picker">
+  <div class="sheet">
+    <div class="pick-head">
+      <button type="button" class="icon-btn small" id="pick-prev" aria-label="Previous year">‹</button>
+      <div class="pick-year"><b id="pick-year"></b><span id="pick-sub"></span></div>
+      <button type="button" class="icon-btn small" id="pick-next" aria-label="Next year">›</button>
+    </div>
+    <div id="pick-months"></div>
+    <div class="pick-foot">
+      <button type="button" class="pill" id="pick-today">Today</button>
+      <button type="button" class="icon-btn small" id="pick-close" aria-label="Close">✕</button>
+    </div>
+  </div>
 </dialog>
 
 <dialog id="symbols">
