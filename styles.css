@@ -185,12 +185,8 @@ button.title:active { background: rgba(0, 0, 0, .18); }
 .pick-foot { display: flex; justify-content: space-between; align-items: center; }
 #picker #pick-close { font-size: 16px; padding: 0; }
 
-/* Monthly statistics: one slim line under the grid, tap for the full table */
-.stats { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 8px; padding: 7px 10px; background: var(--card); border: 1px solid var(--line); border-radius: 10px; color: var(--ink); font: inherit; cursor: pointer; }
-.stats .sline { flex: 1; min-width: 0; display: flex; gap: 14px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; font-size: 17px; }
-.stats .sline::-webkit-scrollbar { display: none; }
-.stats .sline b { margin-left: 4px; font-size: 16px; }
-.stats > i { font-style: normal; color: var(--muted); font-size: 20px; line-height: 1; }
+/* Monthly statistics pop-up */
+.pill.icon { padding: 6px 9px; display: inline-flex; align-items: center; }
 .stat { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 16.5px; }
 .stat th { font-size: 13.5px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); font-weight: 600; text-align: right; padding: 4px 6px; }
 .stat th:first-child, .stat td:first-child { text-align: left; }

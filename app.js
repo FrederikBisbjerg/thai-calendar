@@ -143,13 +143,6 @@
     });
     return c;
   }
-  function statsStrip(y, m) {
-    var c = counts(T.key(y, m, 1).slice(0, 7));
-    var items = data.acts.filter(function (a) { return c[a.id]; });
-    if (!items.length) return '';
-    return '<button class="stats" data-act="stats" aria-label="' + S.statsOpen + '"><span class="sline">' +
-      items.map(function (a) { return '<span>' + esc(a.icon) + '<b>' + c[a.id] + '</b></span>'; }).join('') + '</span><i aria-hidden="true">›</i></button>';
-  }
   function renderStats() {
     var o = T.fromDn(state.cur), cm = counts(T.key(o.y, o.m, 1).slice(0, 7)), cy = counts(String(o.y) + '-');
     var mName = (TH ? N.monthsTh : N.monthsEn)[o.m - 1], yName = TH ? 'พ.ศ. ' + (o.y + 543) : String(o.y);
@@ -182,7 +175,7 @@
           (acts.length > 3 ? '<em>+' + (acts.length - 2) + '</em>' : '') + '</span>' : '') +
         '</button>';
     }
-    h += '</div>' + statsStrip(o.y, o.m) + '<div class="legend">' +
+    h += '</div><div class="legend">' +
       '<span>' + moon(0.5, 14) + ' ' + S.full + '</span><span>' + moon(0, 14) + ' ' + S['new'] + '</span><span>' + moon(0.25, 14) + moon(0.75, 14) + ' ' + S.half + '</span>' +
       '<span><i class="sw" style="background:var(--red)"></i> ' + S.pub + '</span><span>' + S.waxwan + '</span></div>';
     return h + agenda(o.y, o.m);
@@ -289,7 +282,7 @@
     $('prev').setAttribute('aria-label', S.prev); $('next').setAttribute('aria-label', S.next);
     $('sheet-prev').setAttribute('aria-label', S.prev); $('sheet-next').setAttribute('aria-label', S.next);
     $('jump').setAttribute('aria-label', S.jump); $('pick-prev').setAttribute('aria-label', S.prevYear); $('pick-next').setAttribute('aria-label', S.nextYear);
-    $('pick-close').setAttribute('aria-label', S.close); $('stats-close').setAttribute('aria-label', S.close); $('pick-today').textContent = S.today;
+    $('pick-close').setAttribute('aria-label', S.close); $('stats-close').setAttribute('aria-label', S.close); $('stats-btn').setAttribute('aria-label', S.statsOpen); $('pick-today').textContent = S.today;
     $('sheet-close').setAttribute('aria-label', S.close); $('sym-close').setAttribute('aria-label', S.close);
     $('sheet-full').textContent = S.openFull; $('sym-title').textContent = S.symTitle;
     $('new-name').placeholder = S.namePh; $('add-sym').textContent = S.add; $('sym-hint').textContent = S.hint;
@@ -360,6 +353,7 @@
     save(); grow(t);
   });
   document.addEventListener('focusin', function (e) { if (e.target.dataset && e.target.dataset.note) grow(e.target); });
+  $('stats-btn').onclick = function () { renderStats(); $('stats').showModal(); };
   $('stats-close').onclick = function () { $('stats').close(); };
   $('stats').addEventListener('click', function (e) { if (e.target === this) this.close(); });
   $('day-sheet').addEventListener('click', function (e) { if (e.target === this) this.close(); });   // tap outside
@@ -376,8 +370,6 @@
       if (at >= 0) ids.splice(at, 1); else ids.push(el.dataset.toggle);
       if (ids.length) data.log[k] = ids; else delete data.log[k];
       save(); render();
-    } else if (el.dataset.act === 'stats') {
-      renderStats(); $('stats').showModal();
     } else if (el.dataset.act === 'symbols') {
       renderSymbols(); $('symbols').showModal();
     } else {

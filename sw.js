@@ -1,5 +1,5 @@
 // Offline support.
-var CACHE = 'thaical-v7';
+var CACHE = 'thaical-v8';
 var FILES = ['./', 'index.html', 'styles.css', 'thaical.js', 'app.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', function (e) {
